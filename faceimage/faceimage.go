@@ -7,9 +7,9 @@ import (
 	"os"
 )
 
-type faceVector struct {
-	pixels        []float64
-	width, height int
+type FaceVector struct {
+	Pixels        []float64 `datastore:",noindex"`
+	Width, Height int
 }
 
 func readImage(filename string) image.Image {
@@ -18,72 +18,72 @@ func readImage(filename string) image.Image {
 	return im
 }
 
-func ToVector(filename string) faceVector {
+func ToVector(filename string) FaceVector {
 	im := readImage(filename)
 
-	face := faceVector{
-		width:  im.Bounds().Max.X - im.Bounds().Min.X,
-		height: im.Bounds().Max.Y - im.Bounds().Min.Y,
+	face := FaceVector{
+		Width:  im.Bounds().Max.X - im.Bounds().Min.X,
+		Height: im.Bounds().Max.Y - im.Bounds().Min.Y,
 	}
-	face.pixels = make([]float64, face.width*face.height)
+	face.Pixels = make([]float64, face.Width*face.Height)
 	minX := im.Bounds().Min.X
 	minY := im.Bounds().Min.Y
 
 	// iterate through image row by row
-	for y := 0; y < face.height; y++ {
-		for x := 0; x < face.width; x++ {
+	for y := 0; y < face.Height; y++ {
+		for x := 0; x < face.Width; x++ {
 			color := im.At(x-minX, y-minY)
 			// ORL database images are 16-bit grayscale, so can use any of RGB values
 			value, _, _, _ := color.RGBA()
-			face.pixels[(y*face.width)+x] = float64(value)
+			face.Pixels[(y*face.Width)+x] = float64(value)
 		}
 	}
 	return face
 }
 
-func ToImage(face faceVector) image.Image {
-	bounds := image.Rect(0, 0, face.width, face.height)
+func ToImage(face FaceVector) image.Image {
+	bounds := image.Rect(0, 0, face.Width, face.Height)
 	im := image.NewGray16(bounds)
-	for y := 0; y < face.height; y++ {
-		for x := 0; x < face.width; x++ {
+	for y := 0; y < face.Height; y++ {
+		for x := 0; x < face.Width; x++ {
 			// ORL database images are 16-bit grayscale
-			value := uint16(face.pixels[(y*face.width)+x])
+			value := uint16(face.Pixels[(y*face.Width)+x])
 			im.SetGray16(x, y, color.Gray16{value})
 		}
 	}
 	return im
 }
 
-func AverageFaces(filenames []string) faceVector {
-	faces := make([]faceVector, len(filenames))
+func AverageFaces(filenames []string) FaceVector {
+	faces := make([]FaceVector, len(filenames))
 	for i := 0; i < len(filenames); i++ {
 		faces[i] = ToVector(filenames[i])
 	}
 	return average(faces)
 }
 
-func average(faces []faceVector) faceVector {
-	width := faces[0].width
-	height := faces[0].height
+func average(faces []FaceVector) FaceVector {
+	width := faces[0].Width
+	height := faces[0].Height
 	avg := make([]float64, width*height)
 
 	for i := 0; i < len(faces); i++ {
 		face := faces[i]
-		if face.width != width || face.height != height {
-			return faceVector{}
+		if face.Width != width || face.Height != height {
+			return FaceVector{}
 		}
 		for j := 0; j < width*height; j++ {
 			// TODO check what this does to precision
-			avg[j] += face.pixels[j]
+			avg[j] += face.Pixels[j]
 		}
 	}
 
 	for j := 0; j < width*height; j++ {
 		avg[j] = avg[j] / float64(len(faces))
 	}
-	return faceVector{
-		width:  width,
-		height: height,
-		pixels: avg,
+	return FaceVector{
+		Width:  width,
+		Height: height,
+		Pixels: avg,
 	}
 }

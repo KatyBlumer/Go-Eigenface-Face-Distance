@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/KatyBlumer/Go-Eigenface-Face-Distance/eigenface"
 	"github.com/KatyBlumer/Go-Eigenface-Face-Distance/faceimage"
 	"image"
 	"image/png"
@@ -10,7 +11,7 @@ import (
 )
 
 type FaceData struct {
-	vector faceimage.FaceVector
+	vector eigenface.FaceVector
 	img    image.Image
 }
 
@@ -30,14 +31,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello, world!")
 }
 
-func scratch(w http.ResponseWriter, r *http.Request) {
-	avg := averageFaces(5)
-	tempPath := "tmp/avg.png"
-	saveImage(avg, getPath()+tempPath)
-	fmt.Fprint(w, fmt.Sprintf(imageTemplateHTML, tempPath))
-}
-
-func averageFaces(numFaces int) faceimage.FaceVector {
+func averageFaces(numFaces int) eigenface.FaceVector {
 	filePattern := getPath() + "static/img/orl_faces/%v.png"
 	filenames := make([]string, numFaces)
 	for i := 0; i < numFaces; i++ {
@@ -47,7 +41,7 @@ func averageFaces(numFaces int) faceimage.FaceVector {
 	return avgFace
 }
 
-func saveImage(face faceimage.FaceVector, path string) {
+func saveImage(face eigenface.FaceVector, path string) {
 	img := faceimage.ToImage(face)
 	out, err := os.Create(path)
 	if err != nil {
@@ -55,6 +49,13 @@ func saveImage(face faceimage.FaceVector, path string) {
 		os.Exit(1)
 	}
 	err = png.Encode(out, img)
+}
+
+func scratch(w http.ResponseWriter, r *http.Request) {
+	avg := averageFaces(40)
+	tempPath := "tmp/avg.png"
+	saveImage(avg, getPath()+tempPath)
+	fmt.Fprint(w, fmt.Sprintf(imageTemplateHTML, tempPath))
 }
 
 // var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))

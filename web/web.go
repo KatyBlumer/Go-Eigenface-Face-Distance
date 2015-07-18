@@ -18,6 +18,7 @@ type FaceData struct {
 func main() {
 	http.HandleFunc("/", root)
 	http.HandleFunc("/test", scratch)
+	http.HandleFunc("/testimages", testImages)
 	http.Handle("/static/", http.FileServer(http.Dir(getPath())))
 	http.Handle("/tmp/", http.FileServer(http.Dir(getPath())))
 	http.ListenAndServe(":8000", nil)
@@ -56,6 +57,25 @@ func scratch(w http.ResponseWriter, r *http.Request) {
 	tempPath := "tmp/avg.png"
 	saveImage(avg, getPath()+tempPath)
 	fmt.Fprint(w, fmt.Sprintf(imageTemplateHTML, tempPath))
+}
+
+func testImages(w http.ResponseWriter, r *http.Request) {
+	faceNum := 4
+	faces := normalizeFaces(faceNum)
+	face := faces[faceNum-1]
+	tempPath := "tmp/normalized.png"
+	saveImage(face, getPath()+tempPath)
+	fmt.Fprint(w, fmt.Sprintf(imageTemplateHTML, tempPath))
+}
+
+func normalizeFaces(numFaces int) []eigenface.FaceVector {
+	filePattern := getPath() + "static/img/orl_faces/%v.png"
+	faces := make([]eigenface.FaceVector, numFaces)
+	for i := 0; i < numFaces; i++ {
+		filename := fmt.Sprintf(filePattern, i+1)
+		faces[i] = faceimage.ToVector(filename)
+	}
+	return eigenface.Normalize(faces)
 }
 
 // var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))

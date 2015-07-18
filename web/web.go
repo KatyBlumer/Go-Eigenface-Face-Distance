@@ -17,7 +17,7 @@ type FaceData struct {
 
 func main() {
 	http.HandleFunc("/", root)
-	http.HandleFunc("/test", scratch)
+	http.HandleFunc("/test", testScratch)
 	http.HandleFunc("/testimages", testImages)
 	http.Handle("/static/", http.FileServer(http.Dir(getPath())))
 	http.Handle("/tmp/", http.FileServer(http.Dir(getPath())))
@@ -32,27 +32,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello, world!")
 }
 
-func averageFaces(numFaces int) eigenface.FaceVector {
-	filePattern := getPath() + "static/img/orl_faces/%v.png"
-	filenames := make([]string, numFaces)
-	for i := 0; i < numFaces; i++ {
-		filenames[i] = fmt.Sprintf(filePattern, i+1)
-	}
-	avgFace := faceimage.AverageFaces(filenames)
-	return avgFace
-}
-
-func saveImage(face eigenface.FaceVector, path string) {
-	img := faceimage.ToImage(face)
-	out, err := os.Create(path)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	err = png.Encode(out, img)
-}
-
-func scratch(w http.ResponseWriter, r *http.Request) {
+func testScratch(w http.ResponseWriter, r *http.Request) {
 	avg := averageFaces(40)
 	tempPath := "tmp/avg.png"
 	saveImage(avg, getPath()+tempPath)
@@ -68,6 +48,16 @@ func testImages(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, fmt.Sprintf(imageTemplateHTML, tempPath))
 }
 
+func averageFaces(numFaces int) eigenface.FaceVector {
+	filePattern := getPath() + "static/img/orl_faces/%v.png"
+	filenames := make([]string, numFaces)
+	for i := 0; i < numFaces; i++ {
+		filenames[i] = fmt.Sprintf(filePattern, i+1)
+	}
+	avgFace := faceimage.AverageFaces(filenames)
+	return avgFace
+}
+
 func normalizeFaces(numFaces int) []eigenface.FaceVector {
 	filePattern := getPath() + "static/img/orl_faces/%v.png"
 	faces := make([]eigenface.FaceVector, numFaces)
@@ -76,6 +66,16 @@ func normalizeFaces(numFaces int) []eigenface.FaceVector {
 		faces[i] = faceimage.ToVector(filename)
 	}
 	return eigenface.Normalize(faces)
+}
+
+func saveImage(face eigenface.FaceVector, path string) {
+	img := faceimage.ToImage(face)
+	out, err := os.Create(path)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	err = png.Encode(out, img)
 }
 
 // var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))

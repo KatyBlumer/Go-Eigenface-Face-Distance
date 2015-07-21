@@ -1,5 +1,7 @@
 package eigenface
 
+import "github.com/KatyBlumer/gonum/matrix/mat64"
+
 type FaceVector struct {
 	Pixels        []float64
 	Width, Height int
@@ -55,4 +57,41 @@ func Normalize(faces []FaceVector) []FaceVector {
 	}
 
 	return faceDiffs
+}
+
+func Eigenfaces(faces []FaceVector) [][]float64 {
+	mat := matrix(faces)
+	epsilon := 0.01
+	small := 0.01
+	eigenvalues := mat64.SVD(mat, epsilon, small, true /*wantu*/, false /*wantv*/).U
+}
+
+func matrix(faces []FaceVector) [][]float64 {
+	mat := make([]float64, len(faces))
+	for i := 0; i < height; i++ {
+		mat[i] = faces[i].Pixels
+	}
+	return transpose(mat)
+}
+
+func transpose(mat [][]float64) (t [][]float64) {
+	height := len(mat)
+	width := len(mat[0])
+
+	t = makeMat(height, width)
+
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			t[i][j] = mat[j][i]
+		}
+	}
+	return
+}
+
+func makeMat(width, height int) (mat [][]float64) {
+	mat = make([][]float64, height)
+	for i := 0; i < height; i++ {
+		mat[i] = make([]float64, width)
+	}
+	return
 }
